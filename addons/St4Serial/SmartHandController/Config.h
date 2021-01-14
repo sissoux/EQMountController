@@ -16,11 +16,11 @@
 //      Parameter Name              Value   Default  Notes                                                                      Hint
 // DISPLAY -------------------------------------------------------------------------------------------------------------------------
 #define DISPLAY_LANGUAGE             L_en //   L_en, English. Specify language with two letter country code, if supported.    Adjust
-#define DISPLAY_OLED               SH1106 // SH1106, OLED 1.3" I2C display commonly used. SSD1306 is a 0.96" OLED display.    Infreq
+#define DISPLAY_OLED               SSD1306 // SH1106, OLED 1.3" I2C display commonly used. SSD1306 is a 0.96" OLED display.    Infreq
                                           //         SSD1309 is a 2.3" I2C display (w/Reset on ESP32 Pin23 or Teensy Pin14.)
 
 // SERIAL PORTS --------------------------------------------------------------------------------------------------------------------
-#define SERIAL_INTERFACE        SerialST4 // Se..T4, SerialST4 for ST4 port sync comms, you can also use any other available  Infreq
+#define SERIAL_INTERFACE        Serial2 // Se..T4, SerialST4 for ST4 port sync comms, you can also use any other available  Infreq
                                           //         serial port (if pins are unused,) Serial3 for example, on the Teensy3.2
                                           //         This is the serial interface connected to OnStep.
 #define SERIAL_BAUD_DEFAULT          9600 //   9600, Common baud rates for these parameters are 9600,19200,57600,115200.      Infreq
