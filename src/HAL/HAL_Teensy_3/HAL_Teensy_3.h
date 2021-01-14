@@ -35,9 +35,9 @@
 #endif
 
 // New symbols for the Serial ports so they can be remapped if necessary -----------------------------
-#define SerialA Serial
+#define SerialA Serial1
 // SerialA is always enabled, SerialB and SerialC are optional
-#define SerialB Serial1
+#define SerialB Serial5
 #define HAL_SERIAL_B_ENABLED
 #if defined(__MK64FX512__) || defined(__MK66FX1M0__)
   #define SerialC Serial4

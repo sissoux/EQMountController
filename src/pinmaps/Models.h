@@ -19,6 +19,9 @@
 #if PINMAP == MiniPCB2
   #include "Pins.MiniPCB.h"
 #endif
+#if PINMAP == MyPCB
+  #include "Pins.MyPCB.h"
+#endif
 #if PINMAP == MaxPCB
   #include "Pins.MaxPCB.h"
 #endif

@@ -32,6 +32,9 @@
 #if PINMAP == MiniPCB2
   #include "Validate.MiniPCB2.h"
 #endif
+#if PINMAP == MyPCB
+  #include "Validate.MyPCB.h"
+#endif
 #if PINMAP == MaxPCB
   #include "Validate.MaxPCB.h"
 #endif

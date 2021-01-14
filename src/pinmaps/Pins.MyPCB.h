@@ -6,11 +6,11 @@
 #if defined(__MK20DX256__) || defined(_mk20dx128_h_) || defined(__MK20DX128__) || defined(__IMXRT1052__) || defined(__IMXRT1062__)
 
 // The multi-purpose pins (Aux3..Aux8 can be analog pwm/dac if supported)
-#define Aux0                 19
-#define Aux1                 12
-#define Aux2                  5
-#define Aux3                  4     // should be ok as pwm analog output (w/#define Aux3_Analog)
-#define Aux4                 22     // should be ok as pwm analog output (w/#define Aux4_Analog)
+#define Aux0               26     
+#define Aux1               26  
+#define Aux2               26   
+#define Aux3               26        // should be ok as pwm analog output (w/#define Aux3_Analog)
+#define Aux4               26       // should be ok as pwm analog output (w/#define Aux4_Analog)
 #if !defined(_mk20dx128_h_) && !defined(__MK20DX128__) && !defined(__IMXRT1052__) && !defined(__IMXRT1062__)
   #define Aux5              A14     // true analog output
 #endif
@@ -26,8 +26,8 @@
 #define AnalogPecPin         23     // PEC Sense, analog or digital
 
 // The status LED is a two wire jumper with a 10k resistor in series to limit the current to the LED
-#define LEDnegPin          Aux0     // Drain
-#define LEDneg2Pin         Aux4     // Drain
+#define LEDnegPin          22     // Drain
+#define LEDneg2Pin         22     // Drain
 #define ReticlePin         Aux4     // Drain
 
 // For a piezo buzzer
@@ -39,29 +39,29 @@
 #define LimitPin           Aux3     // The limit switch sense is a logic level input normally pull high (2k resistor,) shorted to ground it stops gotos/tracking
 
 // Axis1 RA/Azm step/dir driver
-#define Axis1DirPin          17     // Dir
-#define Axis1StepPin         15     // Step
+#define Axis1DirPin          2     // Dir
+#define Axis1StepPin         3     // Step
 
-#define Axis1_EN             14     // Enable
+#define Axis1_EN             5     // Enable
 #define Axis1_M0             11     // Microstep Mode 0 or SPI MOSI
 #define Axis1_M1             13     // Microstep Mode 1 or SPI SCK
-#define Axis1_M2             10     // Microstep Mode 2 or SPI CS or Decay Mode
-#define Axis1_M3           Aux1     // ESP8266 GPIO0 (option on MiniPCB) or SPI MISO/Fault
+#define Axis1_M2             4     // Microstep Mode 2 or SPI CS or Decay Mode
+#define Axis1_M3             12     // ESP8266 GPIO0 (option on MiniPCB) or SPI MISO/Fault
 #define Axis1ModePin   Axis1_M2     // Decay mode
-#define Axis1FaultPin      Aux1     // SPI MISO/Fault
+#define Axis1FaultPin        12     // SPI MISO/Fault
 #define Axis1HomePin       Aux3     // Sense home position
 
-#define Axis2DirPin           2     // Dir (ESP8266 GPIO0 on MiniPCB13)
-#define Axis2StepPin          3     // Step
+#define Axis2DirPin           6     // Dir (ESP8266 GPIO0 on MiniPCB13)
+#define Axis2StepPin          9     // Step
 
 // Axis2 Dec/Alt step/dir driver
-#define Axis2_EN              4     // Enable
+#define Axis2_EN              10     // Enable
 #define Axis2_M0              11     // Microstep Mode 0 or SPI MOSI
 #define Axis2_M1              13     // Microstep Mode 1 or SPI SCK
-#define Axis2_M2              9     // Microstep Mode 2 or SPI CS or Decay Mode
-#define Axis2_M3              Aux1     // SPI MISO/Fault or I2C SDA
+#define Axis2_M2              20     // Microstep Mode 2 or SPI CS or Decay Mode
+#define Axis2_M3              12     // SPI MISO/Fault or I2C SDA
 #define Axis2ModePin          Axis2_M2     // Decay mode
-#define Axis2FaultPin         Axis2_M3
+#define Axis2FaultPin         12
 #define Axis2HomePin          Aux4     // Sense home position
 
 // For rotator stepper driver
@@ -70,9 +70,9 @@
 #define Axis3DirPin          33     // Dir
 
 // For focuser1 stepper driver
-#define Axis4_EN             -1     // ENable
-#define Axis4StepPin         31     // Step
-#define Axis4DirPin          32     // Dir
+#define Axis4_EN             16     // ENable
+#define Axis4StepPin         18     // Step
+#define Axis4DirPin          19     // Dir
 
 // For focuser2 stepper driver
 #define Axis5_EN             -1     // ENable

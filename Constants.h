@@ -25,6 +25,7 @@
 
 // Mini2 - Small 2-axis design for aluminum mini-case
 #define MiniPCB2                    30 // Teensy3.2
+#define MyPCB                    31 // Teensy3.2
 
 // Max - Larger 4-axis design suitable for embedded or mounting behind a panel
 #define MaxPCB                      40 // First custom "full feature" board. Teensy3.5/Teensy3.6
