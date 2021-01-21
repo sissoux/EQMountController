@@ -34,7 +34,6 @@
  * Discussion, Questions, ...etc
  *   https://groups.io/g/onstep
  */
-
 // Use Config.xxx.h to configure OnStep to your requirements
 
 // firmware info, these are returned by the ":GV?#" commands
@@ -63,7 +62,7 @@
 #include "Validate.h"
 
 // Enable debugging messages on DebugSer -------------------------------------------------------------
-#define DEBUG_OFF             // default=_OFF, use "DEBUG_ON" to activate
+#define DEBUG_ON             // default=_OFF, use "DEBUG_ON" to activate
 #define DebugSer SerialA      // default=SerialA, or SerialB for example (always 9600 baud)
 
 // Helper macros for debugging, with less typing

@@ -25,21 +25,7 @@
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
   // Arduino Mega 2560
   #include "HAL_Mega2560/HAL_Mega2560.h"
-
-#elif defined(_mk20dx128_h_) || defined(__MK20DX128__)
-  // Teensy 3.0
-  #include "HAL_Teensy_3/HAL_Teensy_3.h"
-
-#elif defined(__MK20DX256__)
-  // Teensy 3.2
-  #include "HAL_Teensy_3/HAL_Teensy_3.h"
-
-#elif defined(__MK64FX512__) || defined(__MK66FX1M0__)
-  // Teensy 3.5 or 3.6
-  #include "HAL_Teensy_3/HAL_Teensy_3.h"
-  // We use the same HAL for Teensy 3.2, but add this define
-  #define SER4_AVAILABLE
-
+  
 #elif defined(__IMXRT1052__) || defined(__IMXRT1062__)
   // Teensy 4.0
   #include "HAL_Teensy_4/HAL_Teensy_4.h"
