@@ -9,8 +9,8 @@
 // GPS TLS support
 // uses the specified serial port
 
-#include <TinyGPS.h>          // http://arduiniana.org/libraries/tinygpsplus/
-TinyGPS gps;
+#include <TinyGPS++.h>          // http://arduiniana.org/libraries/tinygpsplus/
+TinyGPSPlus gps;
 
 #ifndef SerialGPS
   #error "Configuration (Config.h): Setting TLS GPS, requires adding a line to identify the serial port '#define SerialGPS Serial6' for example."

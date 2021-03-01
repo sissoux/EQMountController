@@ -10,8 +10,10 @@
 // New symbols for the Serial ports so they can be remapped if necessary -----------------------------
 #define SerialA Serial
 // SerialA is always enabled, SerialB and SerialC are optional
-#define SerialB Serial2
+#define SerialB Serial1
 #define HAL_SERIAL_B_ENABLED
+#define SerialC Serial2
+#define HAL_SERIAL_C_ENABLED
 
 // New symbol for the default I2C port -------------------------------------------------------------
 #include <Wire.h>

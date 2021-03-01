@@ -21,10 +21,15 @@
                                           //         Ramps14, MaxESP2, MaxESP3.  Check Constants.h for more info.
 
 // SERIAL PORTS ---------------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#SERIAL
+
+//Serial A is main USB link
+//Serial B is Direct Rpi link
+//Serial C is Smart Remote link
+
 #define SERIAL_A_BAUD_DEFAULT        115200 //   9600, n. Where n=9600,19200,57600,115200 (common baud rates.)                  Infreq
-#define SERIAL_B_BAUD_DEFAULT        9600 //   9600, n. See (src/HAL/) for your MCU Serial port # etc.                        Option
+#define SERIAL_B_BAUD_DEFAULT        115200 //   9600, n. See (src/HAL/) for your MCU Serial port # etc.                        Option
 #define SERIAL_B_ESP_FLASHING         OFF //    OFF, ON Upload ESP8266 WiFi firmware through SERIAL_B with :ESPFLASH# cmd.    Option
-#define SERIAL_C_BAUD_DEFAULT         OFF //    OFF, n, ON for ESP32 Bluetooth.                                               Option
+#define SERIAL_C_BAUD_DEFAULT         115200 //    OFF, n, ON for ESP32 Bluetooth.                                               Option
 #define SERIAL_C_BLUETOOTH_NAME  "OnStep" // "On..", Bluetooth device name for ESP32.                                         Option
 
 // MOUNT TYPE -------------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#MOUNT_TYPE
@@ -39,9 +44,9 @@
 #define BUZZER_STATE_DEFAULT          ON  //    OFF, ON Start with piezo buzzer/speaker enabled.                              Option
 
 // TIME AND LOCATION -------------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#TLS
-#define TIME_LOCATION_SOURCE          TEENSY //    OFF, DS3231 (I2c,) DS3234 (Spi,) TEENSY (T3.2 internal,) or GPS source.       Option
+#define TIME_LOCATION_SOURCE          GPS //    OFF, DS3231 (I2c,) DS3234 (Spi,) TEENSY (T3.2 internal,) or GPS source.       Option
                                           //         Provides Date/Time, and if available, PPS & Lat/Long also.
-#define SerialGPS                     Serial2
+#define SerialGPS                     Serial3
 #define SerialGPSBaud                 9600
 
 // SENSORS -------------------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#SENSORS

@@ -1,0 +1,52 @@
+{
+  "version": "1",
+  "target": "vsCode",
+  "buildSystem": "makefile",
+  "debugSupport": "none",
+  "configurations": [
+    {
+      "name": "default",
+      "guid": "f90ff731-9095-417e-9a3c-729fe0d86bb8",
+      "setupType": "quick",
+      "coreBase": "C:\\arduino-1.8.13\\hardware\\teensy\\avr",
+      "compilerBase": "C:\\arduino-1.8.13\\hardware\\tools\\arm",
+      "makefileExtension": null,
+      "copyCore": false,
+      "sharedLibraries": [],
+      "projectLibraries": [
+        "U8g2-2.9.2.zip",
+        "TinyGPS-13.0.0.zip",
+        "Ephemeris-1.0.1.zip"
+      ],
+      "board": {
+        "name": "Teensy 4.0",
+        "options": {
+          "USB Type": "Serial",
+          "CPU Speed": "600 MHz",
+          "Optimize": "Faster",
+          "Keyboard Layout": "US English"
+        }
+      }
+    },
+    {
+      "name": "Testdummy",
+      "guid": "b8d96f85-1a4c-4330-94e6-dc049ab48004",
+      "setupType": "quick",
+      "coreBase": "C:\\arduino-1.8.13\\hardware\\teensy\\avr",
+      "compilerBase": "C:\\arduino-1.8.13\\hardware\\tools\\arm",
+      "makefileExtension": null,
+      "copyCore": false,
+      "sharedLibraries": [],
+      "projectLibraries": [],
+      "board": {
+        "name": "Teensy 4.1",
+        "options": {
+          "USB Type": "Serial",
+          "CPU Speed": "600 MHz",
+          "Optimize": "Faster",
+          "Keyboard Layout": "US English"
+        }
+      }
+    }
+  ]
+}
