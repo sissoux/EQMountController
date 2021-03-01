@@ -26,7 +26,7 @@
 #define AnalogPecPin         23     // PEC Sense, analog or digital
 
 // The status LED is a two wire jumper with a 10k resistor in series to limit the current to the LED
-#define LEDposPin          22     // Drain
+#define LEDnegPin          22     // Drain
 #define LEDpos2Pin         -1     // Drain
 #define ReticlePin         Aux4     // Drain
 

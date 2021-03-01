@@ -33,7 +33,7 @@
 
 // USER FEEDBACK -------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#USER_FEEDBACK
 #define LED_STATUS                    ON //     ON, Blinks w/sidereal tracking otherwise steady on indicates activity.       Option
-#define LED_STATUS2                   ON //    OFF, ON Blinks 1s interval w/PPS sync, steady for gotos, off if in standby.   Option
+#define LED_STATUS2                   OFF //    OFF, ON Blinks 1s interval w/PPS sync, steady for gotos, off if in standby.   Option
 #define LED_RETICLE                   OFF //    OFF, n. Where n=0..255 (0..100%) activates feature sets default brightness.   Option
 #define BUZZER                        OFF //    OFF, ON, n. Where n=100..6000 (Hz freq.) for piezo speaker. ON for buzzer.    Option
 #define BUZZER_STATE_DEFAULT          ON  //    OFF, ON Start with piezo buzzer/speaker enabled.                              Option
@@ -69,7 +69,7 @@
 // *** It is up to you to verify the interface meets the electrical specifications of any connected device, use at your own risk ***
 #define ST4_INTERFACE                 OFF //    OFF, ON, ON_PULLUP enables interface. <= 1X guides unless hand control mode.  Option
                                           //         During goto btn press: aborts slew or continue meridian flip pause home
-#define ST4_HAND_CONTROL              ON  //    OFF, ON for hand controller special features and SHC support.                 Option
+#define ST4_HAND_CONTROL              OFF  //    OFF, ON for hand controller special features and SHC support.                 Option
                                           //         Hold [E]+[W] btns >2s: Guide rate   [E]-  [W]+  [N] trk on/off [S] sync
                                           //         Hold [N]+[S] btns >2s: Usr cat item [E]-  [W]+  [N] goto [S] snd on/off
 #define ST4_HAND_CONTROL_FOCUSER      OFF //    OFF, ON alternate to above: Focuser move [E]f1 [W]f2 [N]-     [S]+            Option
@@ -79,7 +79,7 @@
 #define GUIDE_DISABLE_BACKLASH        OFF //    OFF, Disable backlash takeup during guiding at <= 1X                          Option
 
 // TRACKING BEHAVIOUR -------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#TRACKING
-#define TRACK_AUTOSTART               OFF //    OFF, ON Start with tracking enabled.                                          Option
+#define TRACK_AUTOSTART               ON //    OFF, ON Start with tracking enabled.                                          Option
 #define TRACK_REFRACTION_RATE_DEFAULT OFF //    OFF, ON Start w/atmospheric refract. compensation (RA axis/Eq mounts only.)   Option
 #define TRACK_BACKLASH_RATE            25 //     25, n. Where n=2..50 (x sidereal rate) during backlash takeup.               Option
                                           //         Too fast motors stall/gears slam or too slow and sluggish in backlash.
@@ -88,7 +88,7 @@
 #define SYNC_CURRENT_PIER_SIDE_ONLY    ON //     ON, Disables ability of sync to change pier side, for GEM mounts.            Option
 
 // SLEWING BEHAVIOUR ---------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#SLEWING
-#define SLEW_RATE_BASE_DESIRED       5    //    1.0, n. Desired slew rate in deg/sec. Adjustable at run-time from            <-Req'd
+#define SLEW_RATE_BASE_DESIRED       6    //    1.0, n. Desired slew rate in deg/sec. Adjustable at run-time from            <-Req'd
                                           //         1/2 to 2x this rate, and as MCU performace considerations require.
 #define SLEW_RATE_MEMORY              OFF //    OFF, ON Remembers rates set across power cycles.                              Option
 #define SLEW_ACCELERATION_DIST        5.0 //    5.0, n, (degrees.) Approx. distance for acceleration (and deceleration.)      Adjust
@@ -96,8 +96,8 @@
                                           //         is aborted or a limit is exceeded.
                                           
 #define MFLIP_SKIP_HOME               OFF //    OFF, ON Goto directly to the destination without visiting home position.      Option
-#define MFLIP_PAUSE_HOME_MEMORY       OFF //    OFF, ON Remember meridian flip pause at home setting across power cycles.     Option
-#define MFLIP_AUTOMATIC_MEMORY        OFF //    OFF, ON Remember automatic meridian flip setting across power cycles.         Option
+#define MFLIP_PAUSE_HOME_MEMORY       ON //    OFF, ON Remember meridian flip pause at home setting across power cycles.     Option
+#define MFLIP_AUTOMATIC_MEMORY        ON //    OFF, ON Remember automatic meridian flip setting across power cycles.         Option
 
 // PARKING BEHAVIOUR ---------------------------------------------- see https://onstep.groups.io/g/main/wiki/6-Configuration#PARKING
 #define STRICT_PARKING                OFF //    OFF, ON Un-parking is only allowed if successfully parked.                    Option
@@ -113,9 +113,9 @@
 
 // AXIS1 RA/AZM
 // see https://onstep.groups.io/g/main/wiki/6-Configuration#AXIS1
-#define AXIS1_STEPS_PER_DEGREE     15360.0 //  12800, n. Number of steps per degree:                                          <-Req'd
+#define AXIS1_STEPS_PER_DEGREE     11520.0 //  12800, n. Number of steps per degree:                                          <-Req'd
                                           //         n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
-#define AXIS1_STEPS_PER_WORMROT   19200 //  12800, n. Number of steps per worm rotation (PEC Eq mode only:)                <-Req'd
+#define AXIS1_STEPS_PER_WORMROT   14400 //  12800, n. Number of steps per worm rotation (PEC Eq mode only:)                <-Req'd
                                           //         n = (AXIS1_STEPS_PER_DEGREE*360)/reduction_final_stage
 
 #define AXIS1_DRIVER_MODEL            TMC2130_QUIET //    OFF, (See above.) Stepper driver model.                                      <-Often
@@ -140,7 +140,7 @@
 
 // AXIS2 DEC/ALT
 // see https://onstep.groups.io/g/main/wiki/6-Configuration#AXIS2
-#define AXIS2_STEPS_PER_DEGREE    15360.0 //  12800, n. Number of steps per degree:                                          <-Req'd
+#define AXIS2_STEPS_PER_DEGREE    11520.0 //  12800, n. Number of steps per degree:                                          <-Req'd
                                           //         n = (stepper_steps * micro_steps * overall_gear_reduction)/360.0
 
 #define AXIS2_DRIVER_MODEL            TMC2130_QUIET //    OFF, (See above.) Stepper driver model.                                      <-Often
@@ -156,6 +156,7 @@
 
 #define AXIS2_LIMIT_MIN               -91 //    -91, n. Where n=-91..0 (degrees.) Minimum allowed declination.                Infreq
 #define AXIS2_LIMIT_MAX                91 //     91, n. Where n=0..91 (degrees.) Maximum allowed declination.                 Infreq
+#define AXIS2_DRIVER_REVERSE          ON
 
 // Settings for TMC2130, TMC5160, etc? stepper drivers when in SPI mode.
 #define AXIS2_DRIVER_INTPOL          true //   true, false to disable 256x interpolation.                                     Option
