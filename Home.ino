@@ -18,8 +18,8 @@ void checkHome() {
       safetyLimitsOn=true;
       findHomeMode=FH_OFF;
     } else {
-      if (digitalRead(Axis1HomePin) != PierSideStateAxis1 && (guideDirAxis1 == 'e' || guideDirAxis1 == 'w')) StopAxis1();
-      if (digitalRead(Axis2HomePin) != PierSideStateAxis2 && (guideDirAxis2 == 'n' || guideDirAxis2 == 's')) StopAxis2();
+      if (digitalRead(Axis1_HOME) != PierSideStateAxis1 && (guideDirAxis1 == 'e' || guideDirAxis1 == 'w')) StopAxis1();
+      if (digitalRead(Axis2_HOME) != PierSideStateAxis2 && (guideDirAxis2 == 'n' || guideDirAxis2 == 's')) StopAxis2();
     }
   }
   // we are idle and waiting for a fast guide to stop before the final slow guide to refine the home position
@@ -31,33 +31,36 @@ void checkHome() {
   if (findHomeMode == FH_DONE && guideDirAxis1 == 0 && guideDirAxis2 == 0) {
     findHomeMode=FH_OFF;
 
-#if AXIS2_TANGENT_ARM == ON
-    trackingState=abortTrackingState;
-    cli();
-    targetAxis2.part.m = 0; targetAxis2.part.f = 0;
-    posAxis2           = 0;
-    sei();
-#else    
-    // at the polar home position
-    InitStartPosition();
-    atHome=true;
-#endif
+    VLF("MSG: Homing done");
+    #if AXIS2_TANGENT_ARM == ON
+      trackingState=abortTrackingState;
+      cli();
+      targetAxis2.part.m = 0; targetAxis2.part.f = 0;
+      posAxis2           = 0;
+      sei();
+    #else    
+      // at the home position
+      initStartPosition();
+      atHome=true;
+    #endif
   }
 }
 
 void StopAxis1() {
   guideDirAxis1='b';
+  VLF("MSG: Homing switch detected, stopping guide on Axis1");
   if (guideDirAxis2 != 'n' && guideDirAxis2 != 's') { if (findHomeMode == FH_SLOW) findHomeMode=FH_DONE; if (findHomeMode == FH_FAST) findHomeMode=FH_IDLE; }
 }
 
 void StopAxis2() {
   guideDirAxis2='b';
+  VLF("MSG: Homing switch detected, stopping guide on Axis2");
   if (guideDirAxis1 != 'e' && guideDirAxis1 != 'w') { if (findHomeMode == FH_SLOW) findHomeMode=FH_DONE; if (findHomeMode == FH_FAST) findHomeMode=FH_IDLE; }
 }
 #endif
 
 // moves telescope to the home position, then stops tracking
-CommandErrors goHome(boolean fast) {
+CommandErrors goHome(bool fast) {
   CommandErrors e=validateGoto();
   
 #if HOME_SENSE != OFF
@@ -70,23 +73,23 @@ CommandErrors goHome(boolean fast) {
   trackingState=TrackingNone;
 
   // decide direction to guide
-  char a1; if (digitalRead(Axis1HomePin) == HOME_SENSE_STATE_AXIS1) a1='w'; else a1='e';
-  char a2; if (digitalRead(Axis2HomePin) == HOME_SENSE_STATE_AXIS2) a2='n'; else a2='s';
+  char a1; if (digitalRead(Axis1_HOME) == HOME_SENSE_STATE_AXIS1) a1='w'; else a1='e';
+  char a2; if (digitalRead(Axis2_HOME) == HOME_SENSE_STATE_AXIS2) a2='n'; else a2='s';
 
   // attach interrupts to stop guide
-  PierSideStateAxis1=digitalRead(Axis1HomePin);
-  PierSideStateAxis2=digitalRead(Axis2HomePin);
+  PierSideStateAxis1=digitalRead(Axis1_HOME);
+  PierSideStateAxis2=digitalRead(Axis2_HOME);
   
   // disable limits
   safetyLimitsOn=false;
   
   // start guides
   if (fast) {
+    #if AXIS2_TANGENT_ARM == OFF
+      // make sure tracking is disabled
+      trackingState=TrackingNone;
+    #endif
 
-#if AXIS2_TANGENT_ARM != ON
-    // make sure tracking is disabled
-    trackingState=TrackingNone;
-#endif
     // make sure motors are powered on
     enableStepperDrivers();
 
@@ -95,21 +98,19 @@ CommandErrors goHome(boolean fast) {
     findHomeTimeout=millis()+(unsigned long)(secPerDeg*180.0*1000.0);
     
     // 8=HalfMaxRate
-#if AXIS2_TANGENT_ARM != ON
-    e=startGuideAxis1(a1,8,0);
-#endif
-    if (e == CE_NONE) e=startGuideAxis2(a2,8,0,true);
+    if (AXIS2_TANGENT_ARM == OFF) e=startGuideAxis1(a1,8,0,false);
+    if (e == CE_NONE) e=startGuideAxis2(a2,8,0,false,true);
+    if (e == CE_NONE) VLF("MSG: Homing started phase 1"); else VLF("MSG: Homing start phase 1 failed");
   } else {
     findHomeMode=FH_SLOW;
     findHomeTimeout=millis()+30000UL;
     
     // 7=48x sidereal
-#if AXIS2_TANGENT_ARM != ON
-    e=startGuideAxis1(a1,7,0);
-#endif
-    if (e == CE_NONE) e=startGuideAxis2(a2,7,0,true);
+    if (AXIS2_TANGENT_ARM == OFF) e=startGuideAxis1(a1,7,0,false);
+    if (e == CE_NONE) e=startGuideAxis2(a2,7,0,false,true);
+    if (e == CE_NONE) VLF("MSG: Homing started phase 2"); else VLF("MSG: Homing start phase 2 failed");
   }
-  if (e != CE_NONE) stopSlewing();
+  if (e != CE_NONE) stopSlewingAndTracking(SS_ALL_FAST);
   return e;
 #else
   if (e != CE_NONE) return e; 
@@ -127,12 +128,12 @@ CommandErrors goHome(boolean fast) {
     e=goTo(homePositionAxis1,homePositionAxis2,homePositionAxis1,homePositionAxis2,PierSideEast);
   #endif
 
-  if (e == CE_NONE) homeMount=true; else trackingState=abortTrackingState;
+  if (e == CE_NONE) { VLF("MSG: Homing started"); homeMount=true; } else { VLF("MSG: Homing failed"); trackingState=abortTrackingState; }
   return e;
 #endif
 }
 
-boolean isHoming() {
+bool isHoming() {
 #if HOME_SENSE != OFF
   return (homeMount || (findHomeMode != FH_OFF));
 #else
@@ -148,8 +149,11 @@ CommandErrors setHome() {
   // back to startup state
   reactivateBacklashComp();
   initStartupValues();
+  initStartPosition();
+
   currentAlt=45.0;
   doFastAltCalc(true);
+
   safetyLimitsOn=true;
 
   // initialize and disable the stepper drivers
@@ -161,16 +165,15 @@ CommandErrors setHome() {
   
   // reset PEC, unless we have an index to recover from this
   pecRecorded=nv.read(EE_pecRecorded);
+  if (pecRecorded != true && pecRecorded != false) { pecRecorded=false; DLF("ERR, setHome(): bad NV pecRecorded"); }
   #if PEC_SENSE == OFF
     pecStatus=IgnorePEC;
     nv.write(EE_pecStatus,pecStatus);
   #else
     pecStatus=nv.read(EE_pecStatus);
+    if (pecStatus < PEC_STATUS_FIRST || pecStatus > PEC_STATUS_LAST) { pecStatus=IgnorePEC; DLF("ERR, setHome(): bad NV pecStatus"); }
   #endif
   if (!pecRecorded) pecStatus=IgnorePEC;
 
-  // the polar home position
-  InitStartPosition();
-  
   return CE_NONE;
 }

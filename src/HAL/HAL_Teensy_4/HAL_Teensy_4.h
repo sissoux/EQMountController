@@ -14,16 +14,28 @@
 #define HAL_SERIAL_B_ENABLED
 #define SerialC Serial2
 #define HAL_SERIAL_C_ENABLED
+#if defined(USB_DUAL_SERIAL) || defined(USB_TRIPLE_SERIAL)
+  #define SerialD SerialUSB1
+  #define SERIAL_D_BAUD_DEFAULT 9600
+  #define HAL_SERIAL_D_ENABLED
+#endif
+#if defined(USB_TRIPLE_SERIAL)
+  #define SerialE SerialUSB2
+  #define SERIAL_E_BAUD_DEFAULT 9600
+  #define HAL_SERIAL_E_ENABLED
+#endif
 
 // New symbol for the default I2C port -------------------------------------------------------------
 #include <Wire.h>
 #define HAL_Wire Wire
+#define HAL_WIRE_CLOCK 100000
 
 // Non-volatile storage ------------------------------------------------------------------------------
 #if defined(NV_AT24C32_PLUS)
   #include "../drivers/NV_I2C_EEPROM_AT24C32_PLUS.h"
 #elif defined(NV_AT24C32)
-  #include "../drivers/NV_I2C_EEPROM_AT24C32.h"
+  // defaults to 0x57 and 4KB
+  #include "../drivers/NV_I2C_EEPROM_24XX_C.h"
 #elif defined(NV_MB85RC256V)
   #include "../drivers/NV_I2C_FRAM_MB85RC256V.h"
 #else
@@ -34,16 +46,16 @@
 // General purpose initialize for HAL
 #include "imxrt.h"
 
-void HAL_Init(void) {
+void HAL_Initialize(void) {
   analogReadResolution(10);
 
   // clear/make available all PIT timers
-  CCM_CCGR1 |= CCM_CCGR1_PIT(CCM_CCGR_ON);
-  PIT_MCR = 1;
-  PIT_TCTRL0=0;
-  PIT_TCTRL1=0;
-  PIT_TCTRL2=0;
-  PIT_TCTRL3=0;
+//  CCM_CCGR1 |= CCM_CCGR1_PIT(CCM_CCGR_ON);
+//  PIT_MCR = 1;
+//  PIT_TCTRL0=0;
+//  PIT_TCTRL1=0;
+//  PIT_TCTRL2=0;
+//  PIT_TCTRL3=0;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -54,10 +66,6 @@ float HAL_MCU_Temperature(void) {
 
 //--------------------------------------------------------------------------------------------------
 // Initialize timers
-
-// frequency compensation (F_COMP/1000000.0) for adjusting microseconds to timer counts
-#define F_BUS 24000000
-#define F_COMP F_BUS
 
 static IntervalTimer itimer3;
 void TIMER3_COMPA_vect(void);
@@ -102,11 +110,26 @@ void Timer1SetInterval(long iv, double rateRatio) {
 //--------------------------------------------------------------------------------------------------
 // Re-program interval for the motor timers
 
-// prepare to set Axis1/2 hw timers to interval (in microseconds*16), maximum time is about 134 seconds
-void PresetTimerInterval(long iv, float TPSM, volatile uint32_t *nextRate, volatile uint16_t *nextRep) {
-  // 0.262 * 512 = 134.21s
-  uint32_t i=iv; uint16_t t=1; while (iv>65536L*64L) { t++; iv=i/t; if (t==512) { iv=65535L*64L; break; } }
-  cli(); *nextRate=iv*TPSM; *nextRep=t; sei();
+#define F_BUS 16000000L                                  // we force the timer to run at 16MHz
+#define TIMER_RATE_MHZ (F_BUS/1000000.0)                 // Teensy motor timers run at F_BUS Hz so use full resolution
+#define TIMER_RATE_16MHZ_TICKS (16.0/TIMER_RATE_MHZ)     // 16.0/24.0 = 0.6666
+const double timerRate16MHzTicks TIMER_RATE_16MHZ_TICKS; // make sure this is pre-calculated
+
+// prepare to set Axis1/2 hw timers to interval (in 1/16 microsecond units)
+void PresetTimerInterval(long iv, bool TPS, volatile uint32_t *nextRate, volatile uint16_t *nextRep) {
+  // maximum time is about 134 seconds
+  if (iv>2144000000) iv=2144000000;
+
+  // minimum time is 1 micro-second
+  if (iv<16) iv=16;
+
+  // TPS (timer pulse step) == false for SQW mode and double the timer rate
+  if (!TPS) iv/=2L;
+
+  double fiv = iv/timerRate16MHzTicks;
+  uint32_t reps = (fiv/4194304.0)+1.0;
+  uint32_t i = fiv/reps;
+  cli(); *nextRate=i; *nextRep=reps; sei();
 }
 
 // Must work from within the motor ISR timers, in microseconds*(F_COMP/1000000.0) units
@@ -118,19 +141,42 @@ void QuickSetIntervalAxis2(uint32_t r) {
 }
 
 // --------------------------------------------------------------------------------------------------
-// Fast port writing help
+// Fast port writing help, etc.
 
 #define CLR(x,y) (x&=(~(1<<y)))
 #define SET(x,y) (x|=(1<<y))
 #define TGL(x,y) (x^=(1<<y))
 
 // We use standard #define's to do **fast** digitalWrite's to the step and dir pins for the Axis1/2 stepper drivers
-#define Axis1StepPinHIGH digitalWriteFast(Axis1StepPin, HIGH)
-#define Axis1StepPinLOW digitalWriteFast(Axis1StepPin, LOW)
-#define Axis1DirPinHIGH digitalWriteFast(Axis1DirPin, HIGH)
-#define Axis1DirPinLOW digitalWriteFast(Axis1DirPin, LOW)
+#define a1STEP_H digitalWriteFast(Axis1_STEP, HIGH)
+#define a1STEP_L digitalWriteFast(Axis1_STEP, LOW)
+#define a1DIR_H digitalWriteFast(Axis1_DIR, HIGH)
+#define a1DIR_L digitalWriteFast(Axis1_DIR, LOW)
 
-#define Axis2StepPinHIGH digitalWriteFast(Axis2StepPin, HIGH)
-#define Axis2StepPinLOW digitalWriteFast(Axis2StepPin, LOW)
-#define Axis2DirPinHIGH digitalWriteFast(Axis2DirPin, HIGH)
-#define Axis2DirPinLOW digitalWriteFast(Axis2DirPin, LOW)
+#define a2STEP_H digitalWriteFast(Axis2_STEP, HIGH)
+#define a2STEP_L digitalWriteFast(Axis2_STEP, LOW)
+#define a2DIR_H digitalWriteFast(Axis2_DIR, HIGH)
+#define a2DIR_L digitalWriteFast(Axis2_DIR, LOW)
+
+// fast bit-banged SPI should hit an ~1 MHz bitrate for TMC drivers
+#define delaySPI delayNanoseconds(500)
+
+#define a1CS_H digitalWriteFast(Axis1_M2,HIGH)
+#define a1CS_L digitalWriteFast(Axis1_M2,LOW)
+#define a1CLK_H digitalWriteFast(Axis1_M1,HIGH)
+#define a1CLK_L digitalWriteFast(Axis1_M1,LOW)
+#define a1SDO_H digitalWriteFast(Axis1_M0,HIGH)
+#define a1SDO_L digitalWriteFast(Axis1_M0,LOW)
+#define a1M0(P) digitalWriteFast(Axis1_M0,(P))
+#define a1M1(P) digitalWriteFast(Axis1_M1,(P))
+#define a1M2(P) digitalWriteFast(Axis1_M2,(P))
+
+#define a2CS_H digitalWriteFast(Axis2_M2,HIGH)
+#define a2CS_L digitalWriteFast(Axis2_M2,LOW)
+#define a2CLK_H digitalWriteFast(Axis2_M1,HIGH)
+#define a2CLK_L digitalWriteFast(Axis2_M1,LOW)
+#define a2SDO_H digitalWriteFast(Axis2_M0,HIGH)
+#define a2SDO_L digitalWriteFast(Axis2_M0,LOW)
+#define a2M0(P) digitalWriteFast(Axis2_M0,(P))
+#define a2M1(P) digitalWriteFast(Axis2_M1,(P))
+#define a2M2(P) digitalWriteFast(Axis2_M2,(P))

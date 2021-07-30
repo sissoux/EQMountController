@@ -28,7 +28,7 @@ class Library
     
     void init();
 
-    boolean setCatalog(int num);
+    bool setCatalog(int num);
 
     // 16 byte record
     libRec_t list;
@@ -36,36 +36,34 @@ class Library
     void writeVars(char* name, int code, double RA, double Dec);
     void readVars(char* name, int* code, double* RA, double* Dec);
 
-    boolean firstRec();
-    boolean nameRec();
-    boolean firstFreeRec();
-    boolean prevRec();
-    boolean nextRec();
-    boolean gotoRec(int num);
+    bool firstRec();
+    bool nameRec();
+    bool firstFreeRec();
+    bool prevRec();
+    bool nextRec();
+    bool gotoRec(long num);
 
     void clearCurrentRec(); // clears this record
-    void clearLib(); // clears this library
-    void clearAll(); // clears all libraries
+    void clearLib();        // clears this library
+    void clearAll();        // clears all libraries
 
-    int recCount();    // actual number of records for this catalog
-    int recFree();     // number records available for this catalog
-    int recCountAll(); // actual number of records for this library
-    int recFreeAll();  // number records available for this library
-    int recPos;        // currently selected record#
-    int recMax;        // last record#
+    long recCount();        // actual number of records for this catalog
+    long recFree();         // number records available for this catalog
+    long recCountAll();     // actual number of records for this library
+    long recFreeAll();      // number records available for this library
+    long recPos;            // currently selected record#
+    long recMax;            // last record#
     
   private:
-    libRec_t readRec(int address);
-    void writeRec(int address, libRec_t data);
-    void clearRec(int address);
+    libRec_t readRec(long address);
+    void writeRec(long address, libRec_t data);
+    void clearRec(long address);
     inline double degRange(double d) { while (d >= 360.0) d-=360.0; while (d < 0.0)  d+=360.0; return d; }
 
     int catalog;
 
-    int byteCount;
-    int bytePos;
-    int byteMin;
-    int byteMax;
+    long byteMin;
+    long byteMax;
 };
 
 Library Lib;
@@ -76,13 +74,13 @@ Library::Library()
   catalog=0;
 
   byteMin=200+pecBufferSize;
-  
-  byteMax=E2END-100;
+  byteMax=GSB;
 
-  byteCount=(byteMax-byteMin)+1;
-  bytePos=byteMin;
-  
-  recMax=byteCount/rec_size;           // maximum number of records
+  long byteCount=(byteMax-byteMin)+1;
+  if (byteCount < 0) byteCount=0;
+  if (byteCount > 262143) byteCount=262143; // maximum 256KB
+
+  recMax=byteCount/rec_size; // maximum number of records
 }
 
 Library::~Library()
@@ -96,9 +94,9 @@ void Library::init() {
   firstRec();
 }
 
-boolean Library::setCatalog(int num)
+bool Library::setCatalog(int num)
 {
-  if ((num < 0) || (num > 14)) return false;
+  if (num < 0 || num > 14) return false;
 
   catalog=num;
   return firstRec();
@@ -131,7 +129,7 @@ void Library::readVars(char* name, int* code, double* RA, double* Dec)
   int cat = work.libRec.code>>4;
 
   // empty? or not found
-  if ((cat == 15) || (cat != catalog)) { name[0]=0; *code=0; *RA=0.0; *Dec=0.0; return; }
+  if (cat == 15 || cat != catalog) { name[0]=0; *code=0; *RA=0.0; *Dec=0.0; return; }
 
   for (int l=0; l < 11; l++) name[l]=work.libRec.name[l]; name[11]=0;
   
@@ -146,32 +144,32 @@ void Library::readVars(char* name, int* code, double* RA, double* Dec)
   *Dec=((*Dec/65536.0)*180.0)-90.0;
 }
 
-libRec_t Library::readRec(int address)
+libRec_t Library::readRec(long address)
 {
   libRec_t work;
-  int l=address*rec_size+byteMin;
+  long l=address*rec_size+byteMin;
   nv.readBytes(l,(uint8_t*)&work.libRecBytes,16);
   return work;
 }
 
-void Library::writeRec(int address, libRec_t data)
+void Library::writeRec(long address, libRec_t data)
 {
-  if ((address >= 0) && (address < recMax)) {
-    int l=address*rec_size+byteMin;
-    for (int m=0;m < 16;m++) nv.write(l+m,data.libRecBytes[m]);
+  if (address >= 0 && address < recMax) {
+    long l=address*rec_size+byteMin;
+    for (int m=0; m < 16; m++) nv.write(l+m,data.libRecBytes[m]);
   }
 }
 
-void Library::clearRec(int address)
+void Library::clearRec(long address)
 {
-  if ((address >= 0) && (address < recMax)) {
-    int l=address*rec_size+byteMin;
+  if (address >= 0 && address < recMax) {
+    long l=address*rec_size+byteMin;
     int code=15<<4;
     nv.write(l+11,(byte)code); // catalog code 15 = deleted
   }
 }
 
-boolean Library::firstRec()
+bool Library::firstRec()
 {
   libRec_t work;
 
@@ -179,14 +177,14 @@ boolean Library::firstRec()
   recPos=0;
   work=readRec(recPos);
   int cat=(int)work.libRec.code>>4;
-  if ((work.libRec.name[0] != '$') && (cat == catalog)) return true;
+  if (work.libRec.name[0] != '$' && cat == catalog) return true;
 
   // otherwise find the first one, if it exists
   return nextRec();
 }
 
 // move to the catalog name rec
-boolean Library::nameRec()
+bool Library::nameRec()
 {
   libRec_t work;
 
@@ -195,12 +193,12 @@ boolean Library::nameRec()
   
   do
   {
-    recPos++; if (recPos >= recMax) { break; }
+    recPos++; if (recPos >= recMax) break;
     work=readRec(recPos);
 
     cat=(int)work.libRec.code>>4;
 
-    if ((work.libRec.name[0] == '$') && (cat == catalog)) break;
+    if (work.libRec.name[0] == '$' && cat == catalog) break;
   } while (recPos < recMax);
   if (recPos >= recMax) { recPos=recMax-1; return false; }
 
@@ -208,7 +206,7 @@ boolean Library::nameRec()
 }
 
 // move to first unused record for this catalog
-boolean Library::firstFreeRec()
+bool Library::firstFreeRec()
 {
   libRec_t work;
 
@@ -217,7 +215,7 @@ boolean Library::firstFreeRec()
   
   do
   {
-    recPos++; if (recPos >= recMax) { break; }
+    recPos++; if (recPos >= recMax) break;
     work=readRec(recPos);
 
     cat=(int)work.libRec.code>>4;
@@ -230,7 +228,7 @@ boolean Library::firstFreeRec()
 }
 
 // read the previous record, if it exists
-boolean Library::prevRec()
+bool Library::prevRec()
 {
   libRec_t work;
 
@@ -242,7 +240,7 @@ boolean Library::prevRec()
     work=readRec(recPos);
 
     cat=(int)work.libRec.code>>4;
-    if ((work.libRec.name[0] != '$') && (cat == catalog)) break;
+    if (work.libRec.name[0] != '$' && cat == catalog) break;
   } while (recPos >= 0);
   if (recPos < 0) { recPos=0; return false; }
 
@@ -250,7 +248,7 @@ boolean Library::prevRec()
 }
 
 // read the next record, if it exists
-boolean Library::nextRec()
+bool Library::nextRec()
 {
   libRec_t work;
 
@@ -262,7 +260,7 @@ boolean Library::nextRec()
     work=readRec(recPos);
 
     cat=(int)work.libRec.code>>4;
-    if ((work.libRec.name[0] != '$') && (cat == catalog)) break;
+    if (work.libRec.name[0] != '$' && cat == catalog) break;
   } while (recPos < recMax);
   if (recPos >= recMax) { recPos=recMax-1; return false; }
 
@@ -270,62 +268,62 @@ boolean Library::nextRec()
 }
 
 // read the specified record (of this catalog), if it exists
-boolean Library::gotoRec(int num)
+bool Library::gotoRec(long num)
 {
   libRec_t work;
 
   int cat;
-  int l,r=0;
-  int c=0;
+  long r=0;
+  long c=0;
   
-  for (l=0;l < recMax;l++) {
+  for (long l=0; l < recMax; l++) {
     work=readRec(l); r=l;
 
     cat=(int)work.libRec.code>>4;
-    if ((work.libRec.name[0] != '$') && (cat == catalog)) c++;
+    if (work.libRec.name[0] != '$' && cat == catalog) c++;
     if (c == num) break;
   }
   if (c == num) { recPos=r; return true; } else return false;
 }
 
 // count all catalog records
-int Library::recCount()
+long Library::recCount()
 {
   libRec_t work;
 
   int cat;
-  int c=0;
+  long c=0;
   
-  for (int l=0;l < recMax;l++) {
+  for (long l=0; l < recMax; l++) {
     work=readRec(l);
 
     cat=(int)work.libRec.code>>4;
-    if ((work.libRec.name[0] != '$') && (cat == catalog)) c++;
+    if (work.libRec.name[0] != '$' && cat == catalog) c++;
   }
   
   return c;
 }
 
 // count all library records (index or otherwise)
-int Library::recCountAll()
+long Library::recCountAll()
 {
   libRec_t work;
 
   int cat;
-  int c=0;
+  long c=0;
   
-  for (int l=0;l < recMax;l++) {
+  for (long l=0; l < recMax; l++) {
     work=readRec(l);
 
     cat=(int)work.libRec.code>>4;
-    if ((cat >= 0) && (cat <= 14)) c++;
+    if (cat >= 0 && cat <= 14) c++;
   }
   
   return c;
 }
 
 // library records available
-int Library::recFreeAll()
+long Library::recFreeAll()
 {
   return recMax-recCountAll();
 }
@@ -350,7 +348,7 @@ void Library::clearLib()
 
   int cat;
 
-  for (int l=0;l < recMax;l++) {
+  for (long l=0; l < recMax; l++) {
     work=readRec(l);
 
     cat=(int)work.libRec.code>>4;
@@ -361,5 +359,5 @@ void Library::clearLib()
 // mark all records as empty
 void Library::clearAll()
 {
-  for (int l=0;l < recMax;l++) clearRec(l);
+  for (long l=0;l < recMax;l++) clearRec(l);
 }

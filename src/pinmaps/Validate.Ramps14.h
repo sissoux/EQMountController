@@ -28,7 +28,7 @@
 #endif
 
 // TIME -------------------------------------
-#if RTC == DS3231
+#if TIME_LOCATION_SOURCE == DS3231
   // dedicated pins
 #endif
 
@@ -41,8 +41,13 @@
   // dedicated pins
 #endif
 
-#if TELESCOPE_TEMPERATURE == DS1820
-  // dedicated pin
+#if OneWirePin == Aux4 && defined(ONEWIRE_DEVICES_PRESENT)
+  #if ASSIGNED_AUX4 != PIN_NOT_ASSIGNED
+    #error "Configuration (Config.h): OneWire interface device(s) enabled but Aux4 is already in use, choose one feature on Aux4"
+  #else
+    #undef ASSIGNED_AUX4
+    #define ASSIGNED_AUX4 PIN_DEDICATED
+  #endif
 #endif
 
 #if PEC_SENSE == ON || PEC_SENSE == ON_PULLUP || PEC_SENSE == ON_PULLDOWN

@@ -30,13 +30,42 @@
   #define SERIAL_C_BAUD_DEFAULT SERIAL_C_BLUETOOTH_NAME
 #endif
 
+// SerialD
+#if PINMAP == InsteinESP1
+  #ifndef SERIAL_D_BAUD_DEFAULT
+    #define SERIAL_D_BAUD_DEFAULT 9600
+  #endif
+  #define SerialD Serial1
+  #define SERIAL_D_RX 21
+  #define SERIAL_D_TX 22
+  #define HAL_SERIAL_D_ENABLED
+#elif defined(SERIAL_D_BAUD_DEFAULT)
+  #if SERIAL_D_BAUD_DEFAULT != OFF
+    #define SerialD Serial1
+    #define HAL_SERIAL_D_ENABLED
+  #endif
+#endif
+
 // New symbol for the default I2C port ---------------------------------------------------------------
 #include <Wire.h>
 #define HAL_Wire Wire
+#define HAL_WIRE_CLOCK 100000
+
+//--------------------------------------------------------------------------------------------------
+// Nanoseconds delay function
+unsigned int _nanosPerPass=1;
+IRAM_ATTR void delayNanoseconds(unsigned int n) {
+  unsigned int np=(n/_nanosPerPass);
+  for (unsigned int i=0; i<np; i++) { __asm__ volatile ("nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t" "nop\n\t"); }
+}
 
 //--------------------------------------------------------------------------------------------------
 // General purpose initialize for HAL
-void HAL_Init(void) {
+void HAL_Initialize(void) {
+  // calibrate delayNanoseconds()
+  uint32_t startTime,npp;
+  cli(); startTime=micros(); delayNanoseconds(65535); npp=micros(); sei(); npp=((int32_t)(npp-startTime)*1000)/63335;
+  if (npp<1) npp=1; if (npp>2000) npp=2000; _nanosPerPass=npp;
 }
 
 #include "Analog.h"
@@ -84,7 +113,7 @@ void timerAlarmsDisable() { timerAlarmDisable(itimer1); timerAlarmDisable(itimer
 
 // Non-volatile storage ------------------------------------------------------------------------------
 #if defined(NV_AT24C32)
-  #include "../drivers/NV_I2C_EEPROM_AT24C32.h"
+  #include "../drivers/NV_I2C_EEPROM_AT24C32_C.h"
 #elif defined(NV_MB85RC256V)
   #include "../drivers/NV_I2C_FRAM_MB85RC256V.h"
 #else
@@ -93,9 +122,6 @@ void timerAlarmsDisable() { timerAlarmDisable(itimer1); timerAlarmDisable(itimer
 
 //--------------------------------------------------------------------------------------------------
 // Initialize timers
-
-// frequency compensation (F_COMP/1000000.0) for adjusting microseconds to timer counts
-#define F_COMP 16000000.0
 
 extern long int siderealInterval;
 extern void SiderealClockSetInterval (long int);
@@ -133,16 +159,29 @@ void Timer1SetInterval(long iv, double rateRatio) {
 }
 
 //--------------------------------------------------------------------------------------------------
-// Re-program the interval (in microseconds*(F_COMP/1000000.0)) for the motor timers
+// Re-program interval for the motor timers
 
-// Prepare to set Axis1/2 hw timers to interval (in microseconds*16), maximum time is about 134 seconds
-void PresetTimerInterval(long iv, float TPSM, volatile uint32_t *nextRate, volatile uint16_t *nextRep) {
-  // 0.262 * 512 = 134.21s
-  uint32_t i=iv; uint16_t t=1; while (iv>65536L*64L) { t++; iv=i/t; if (t==512) { iv=65535L*64L; break; } }
-  cli(); *nextRate=((F_COMP/1000000.0) * (iv*0.0625) * TPSM - 1.0); *nextRep=t; sei();
+#define TIMER_RATE_MHZ 16L          // ESP32 motor timers run at 16MHz so use full resolution
+#define TIMER_RATE_16MHZ_TICKS 1L   // 16L/TIMER_RATE_MHZ, for the default 16MHz
+
+// prepare to set Axis1/2 hw timers to interval (in 1/16 microsecond units)
+void PresetTimerInterval(long iv, bool TPS, volatile uint32_t *nextRate, volatile uint16_t *nextRep) {
+  // maximum time is about 134 seconds
+  if (iv>2144000000) iv=2144000000;
+
+  // minimum time is 1 micro-second
+  if (iv<16) iv=16;
+
+  // TPS (timer pulse step) == false for SQW mode and double the timer rate
+  if (!TPS) iv/=2L;
+
+  iv/=TIMER_RATE_16MHZ_TICKS;
+  uint32_t reps = (iv/4194304L)+1;
+  uint32_t i = iv/reps;
+  cli(); *nextRate=i; *nextRep=reps; sei();
 }
 
-// Must work from within the motor ISR timers
+// Must work from within the motor ISR timers, in tick units
 IRAM_ATTR void QuickSetIntervalAxis1(uint32_t r) {
   timerAlarmWrite(itimer3, r, true);
 }
@@ -151,19 +190,42 @@ IRAM_ATTR void QuickSetIntervalAxis2(uint32_t r) {
 }
 
 // --------------------------------------------------------------------------------------------------
-// Fast port writing help
+// Fast port writing help, etc.
 
 #define CLR(x,y) (x&=(~(1<<y)))
 #define SET(x,y) (x|=(1<<y))
 #define TGL(x,y) (x^=(1<<y))
 
 // We use standard #define's to do **fast** digitalWrite's to the step and dir pins for the Axis1/2 stepper drivers
-#define Axis1StepPinHIGH digitalWrite(Axis1StepPin, HIGH)
-#define Axis1StepPinLOW digitalWrite(Axis1StepPin, LOW)
-#define Axis1DirPinHIGH digitalWrite(Axis1DirPin, HIGH)
-#define Axis1DirPinLOW digitalWrite(Axis1DirPin, LOW)
+#define a1STEP_H digitalWrite(Axis1_STEP, HIGH)
+#define a1STEP_L digitalWrite(Axis1_STEP, LOW)
+#define a1DIR_H digitalWrite(Axis1_DIR, HIGH)
+#define a1DIR_L digitalWrite(Axis1_DIR, LOW)
 
-#define Axis2StepPinHIGH digitalWrite(Axis2StepPin, HIGH)
-#define Axis2StepPinLOW digitalWrite(Axis2StepPin, LOW)
-#define Axis2DirPinHIGH digitalWrite(Axis2DirPin, HIGH)
-#define Axis2DirPinLOW digitalWrite(Axis2DirPin, LOW)
+#define a2STEP_H digitalWrite(Axis2_STEP, HIGH)
+#define a2STEP_L digitalWrite(Axis2_STEP, LOW)
+#define a2DIR_H digitalWrite(Axis2_DIR, HIGH)
+#define a2DIR_L digitalWrite(Axis2_DIR, LOW)
+
+// fast bit-banged SPI should hit an ~1 MHz bitrate for TMC drivers
+#define delaySPI delayNanoseconds(500)
+
+#define a1CS_H digitalWrite(Axis1_M2,HIGH)
+#define a1CS_L digitalWrite(Axis1_M2,LOW)
+#define a1CLK_H digitalWrite(Axis1_M1,HIGH)
+#define a1CLK_L digitalWrite(Axis1_M1,LOW)
+#define a1SDO_H digitalWrite(Axis1_M0,HIGH)
+#define a1SDO_L digitalWrite(Axis1_M0,LOW)
+#define a1M0(P) digitalWrite(Axis1_M0,(P))
+#define a1M1(P) digitalWrite(Axis1_M1,(P))
+#define a1M2(P) digitalWrite(Axis1_M2,(P))
+
+#define a2CS_H digitalWrite(Axis2_M2,HIGH)
+#define a2CS_L digitalWrite(Axis2_M2,LOW)
+#define a2CLK_H digitalWrite(Axis2_M1,HIGH)
+#define a2CLK_L digitalWrite(Axis2_M1,LOW)
+#define a2SDO_H digitalWrite(Axis2_M0,HIGH)
+#define a2SDO_L digitalWrite(Axis2_M0,LOW)
+#define a2M0(P) digitalWrite(Axis2_M0,(P))
+#define a2M1(P) digitalWrite(Axis2_M1,(P))
+#define a2M2(P) digitalWrite(Axis2_M2,(P))

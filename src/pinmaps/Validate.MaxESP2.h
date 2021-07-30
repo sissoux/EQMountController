@@ -43,15 +43,15 @@
 #endif
 
 // TIME -------------------------------------
-#if RTC == DS3231
+#if TIME_LOCATION_SOURCE == DS3231
   #if ASSIGNED_AUX3 == PIN_DEDICATED
-    #error "Configuration (Config.h): RTC DS3231 I2C enabled but Aux3 is already in use, choose one feature on Aux3"
+    #error "Configuration (Config.h): TIME_LOCATION_SOURCE DS3231 I2C enabled but Aux3 is already in use, choose one feature on Aux3"
   #else
     #undef ASSIGNED_AUX3
     #define ASSIGNED_AUX3 PIN_SHARED_I2C
   #endif
   #if ASSIGNED_AUX4 == PIN_DEDICATED
-    #error "Configuration (Config.h): RTC DS3231 I2C enabled but Aux4 is already in use, choose one feature on Aux4"
+    #error "Configuration (Config.h): TIME_LOCATION_SOURCE DS3231 I2C enabled but Aux4 is already in use, choose one feature on Aux4"
   #else
     #undef ASSIGNED_AUX4
     #define ASSIGNED_AUX4 PIN_SHARED_I2C
@@ -83,9 +83,9 @@
   #endif
 #endif
 
-#if TELESCOPE_TEMPERATURE == DS1820
+#if OneWirePin == Aux8 && defined(ONEWIRE_DEVICES_PRESENT)
   #if ASSIGNED_AUX8 != PIN_NOT_ASSIGNED
-    #error "Configuration (Config.h): RTC DS1820 OneWire interface enabled but Aux8 is already in use, choose one feature on Aux8"
+    #error "Configuration (Config.h): OneWire interface device(s) enabled but Aux8 is already in use, choose one feature on Aux8"
   #else
     #undef ASSIGNED_AUX8
     #define ASSIGNED_AUX8 PIN_DEDICATED

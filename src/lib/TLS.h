@@ -12,25 +12,29 @@
 #include <TinyGPS++.h>          // http://arduiniana.org/libraries/tinygpsplus/
 TinyGPSPlus gps;
 
-#ifndef SerialGPS
-  #error "Configuration (Config.h): Setting TLS GPS, requires adding a line to identify the serial port '#define SerialGPS Serial6' for example."
-#endif
-
 class timeLocationSource {
   public:
     bool active=false;
 
     // initialize
     bool init() {
-      SerialGPS.begin(9600);
       active=false;
       return active;
     }
 
-    boolean poll() {
-      if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid()) { active=true; return true; }
+    bool poll() {
+      if (gps.location.isValid() && siteIsValid() && gps.date.isValid() && gps.time.isValid() && timeIsValid()) { active=true; return true; }
       while (SerialGPS.available() > 0) gps.encode(SerialGPS.read());
       return false;
+    }
+
+    bool timeIsValid() {
+      if ((gps.date.year() >= 0) && (gps.date.year() <= 3000) && (gps.date.month() >= 1) && (gps.date.month() <= 12) && (gps.date.day() >= 1) && (gps.date.day() <= 31) &&
+          (gps.time.hour() >= 0) && (gps.time.hour() <= 23) && (gps.time.minute() >= 0) && (gps.time.minute() <= 59) && (gps.time.second() >= 0) && (gps.time.second() <= 59)) return true; else return false;
+    }
+
+    bool siteIsValid() {
+      if (gps.location.lat() >= -90 && gps.location.lat() <= 90 && gps.location.lng() >= -360 && gps.location.lng() <= 360) return true; else return false;
     }
 
     // set the GPS's time (does nothing)
@@ -40,25 +44,30 @@ class timeLocationSource {
     // get the GPS's time (local standard time)
     void get(double &JD, double &LMT) {
       if (!active) return;
-      if ((gps.date.year() >= 0) && (gps.date.year() <= 3000) && (gps.date.month() >= 1) && (gps.date.month() <= 12) && (gps.date.day() >= 1) && (gps.date.day() <= 31) &&
-          (gps.time.hour() >= 0) && (gps.time.hour() <= 23) && (gps.time.minute() >= 0) && (gps.time.minute() <= 59) && (gps.time.second() >= 0) && (gps.time.second() <= 59)) 
-      {
-          JD=julian(gps.date.year(),gps.date.month(),gps.date.day());
-          LMT=(gps.time.hour()+(gps.time.minute()/60.0)+(gps.time.second()/3600.0))-timeZone;
-          if (LMT < 0)   { LMT+=24.0; JD-=1; }
-          if (LMT >= 24) { LMT-=24.0; JD+=1; }
-      }
+      if (!timeIsValid()) return;
+
+      JD=julian(gps.date.year(),gps.date.month(),gps.date.day());
+      LMT=(gps.time.hour()+(gps.time.minute()/60.0)+(gps.time.second()/3600.0))-timeZone;
+      if (LMT < 0)   { LMT+=24.0; JD-=1; }
+      if (LMT >= 24) { LMT-=24.0; JD+=1; }
     }
 
     // get the GPS's location
     void getSite(double &LAT, double &LONG) {
       if (!active) return;
-      LAT=gps.location.lat();
-      LONG=gps.location.lng();
+      if (!siteIsValid()) return;
+
+      LAT =gps.location.lat();
+      LONG=-gps.location.lng();
     }
 };
 
 #elif TIME_LOCATION_SOURCE == DS3234S
+
+#ifdef SSPI_SHARED
+  #error "Configuration (Config.h): TIME_LOCATION_SOURCE DS3234S is not compatible with your PINMAP.  Use DS3234M."
+#endif
+
 // -----------------------------------------------------------------------------------
 // DS3234 RTC support 
 // uses the default SPI port and CS (DS3234_CS_PIN from Pins.xxx.h)
@@ -126,10 +135,12 @@ class timeLocationSource {
     // initialize (also enables the RTC PPS if available)
     bool init() {
       HAL_Wire.begin();
+      HAL_Wire.setClock(HAL_WIRE_CLOCK);
       HAL_Wire.beginTransmission(0x68);
       bool error = HAL_Wire.endTransmission() != 0;
       if (!error) {
         _Rtc.Begin();
+        HAL_Wire.setClock(HAL_WIRE_CLOCK);
         if (!_Rtc.GetIsRunning()) _Rtc.SetIsRunning(true);
   
         // see if the RTC is present
@@ -138,9 +149,13 @@ class timeLocationSource {
           _Rtc.SetSquareWavePin(DS3231SquareWavePin_ModeClock);
           _Rtc.SetSquareWavePinClockFrequency(DS3231SquareWaveClock_1Hz);
           active=true;
-        }
-      }
-
+        } else DLF("WRN, tls.init(): DS3231 GetIsRunning() false");
+      } else DLF("WRN, tls.init(): DS3231 not found at I2C address 0x68");
+      #ifdef HAL_WIRE_RESET_AFTER_CONNECT
+        HAL_Wire.end();
+        HAL_Wire.begin();
+        HAL_Wire.setClock(HAL_WIRE_CLOCK);
+      #endif
       return active;
     }
 
@@ -156,7 +171,7 @@ class timeLocationSource {
       h=floor(f1);
       m=(f1-h)*60.0;
       s=(m-floor(m))*60.0;
-      
+
       RtcDateTime updateTime = RtcDateTime(yy, mo, d, h, floor(m), floor(s));
       _Rtc.SetDateTime(updateTime);
     }
@@ -203,8 +218,10 @@ class timeLocationSource {
         _Rtc.SetSquareWavePin(DS3234SquareWavePin_ModeClock);
         _Rtc.SetSquareWavePinClockFrequency(DS3234SquareWaveClock_1Hz);
         active=true;
-      }
-  
+      } else DLF("WRN, tls.init(): DS3234 GetIsRunning() false");
+#ifdef SSPI_SHARED
+      SPI.end();
+#endif
       return active;
     }
 
@@ -222,20 +239,32 @@ class timeLocationSource {
       m=(f1-h)*60.0;
       s=(m-floor(m))*60.0;
       
+#ifdef SSPI_SHARED
+      SPI.begin();
+#endif
       RtcDateTime updateTime = RtcDateTime(yy, mo, d, h, floor(m), floor(s));
       _Rtc.SetDateTime(updateTime);
+#ifdef SSPI_SHARED
+      SPI.end();
+#endif
     }
     
     // get the RTC's time (local standard time)
     void get(double &JD, double &LMT) {
       if (!active) return;
 
+#ifdef SSPI_SHARED
+      SPI.begin();
+#endif
       RtcDateTime now = _Rtc.GetDateTime();
       if ((now.Year() >= 2018) && (now.Year() <= 3000) && (now.Month() >= 1) && (now.Month() <= 12) && (now.Day() >= 1) && (now.Day() <= 31) &&
           (now.Hour() >= 0) && (now.Hour() <= 23) && (now.Minute() >= 0) && (now.Minute() <= 59) && (now.Second() >= 0) && (now.Second() <= 59)) {
         JD=julian(now.Year(),now.Month(),now.Day());
         LMT=(now.Hour()+(now.Minute()/60.0)+(now.Second()/3600.0));
       }
+#ifdef SSPI_SHARED
+      SPI.end();
+#endif
     }
 
     // get the location (does nothing)

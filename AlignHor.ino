@@ -3,7 +3,7 @@
 //
 // by Howard Dutton
 //
-// Copyright (C) 2012 to 2019 Howard Dutton
+// Copyright (C) 2012 to 2020 Howard Dutton
 //
 
 // -----------------------------------------------------------------------------------
@@ -31,13 +31,21 @@ void TGeoAlignH::init() {
 // remember the alignment between sessions
 void TGeoAlignH::readCoe() {
   ax1Cor=nv.readFloat(EE_ax1Cor);
+  if (ax1Cor < -360 || ax1Cor > 360) { ax1Cor=0.0; DLF("ERR, readCoe(): bad NV ax1Cor"); }
   ax2Cor=nv.readFloat(EE_ax2Cor);
+  if (ax2Cor < -360 || ax2Cor > 360) { ax2Cor=0.0; DLF("ERR, readCoe(): bad NV ax2Cor"); }
   dfCor=nv.readFloat(EE_dfCor);  // dfCor is ffCor for fork mounts
+  if (dfCor < -10 || dfCor > 10) { dfCor=0.0; DLF("ERR, readCoe(): bad NV dfCor"); }
   tfCor=nv.readFloat(EE_tfCor);
+  if (tfCor < -10 || tfCor > 10) { tfCor=0.0; DLF("ERR, readCoe(): bad NV tfCor"); }
   doCor=nv.readFloat(EE_doCor);
+  if (doCor < -10 || doCor > 10) { doCor=0.0; DLF("ERR, readCoe(): bad NV doCor"); }
   pdCor=nv.readFloat(EE_pdCor);
+  if (pdCor < -10 || pdCor > 10) { pdCor=0.0; DLF("ERR, readCoe(): bad NV pdCor"); }
   altCor=nv.readFloat(EE_altCor);
+  if (altCor < -10 || altCor > 10) { altCor=0.0; DLF("ERR, readCoe(): bad NV altCor"); }
   azmCor=nv.readFloat(EE_azmCor);
+  if (azmCor < -10 || azmCor > 10) { azmCor=0.0; DLF("ERR, readCoe(): bad NV azmCor"); }
 }
 
 void TGeoAlignH::writeCoe() {
@@ -358,7 +366,7 @@ void TGeoAlignH::horToInstr(double Alt, double Azm, double *Alt1, double *Azm1, 
   if (Alt < -90.0) Alt=-90.0;
 
   // breaks-down near the Zenith (limited to > 1' from Zenith)
-  if (abs(Alt) < 89.98333333) {
+  if (fabs(Alt) < 89.98333333) {
 
     // initial rough guess at instrument HA,Dec
     double z=Azm/Rad;
@@ -428,7 +436,7 @@ void TGeoAlignH::instrToHor(double Alt, double Azm, double *Alt1, double *Azm1, 
   if (Alt < -90.0) Alt=-90.0;
 
   // breaks-down near the Zenith (limited to > 1' from Zenith)
-  if (abs(Alt) < 89.98333333) {
+  if (fabs(Alt) < 89.98333333) {
     double z=Azm/Rad;
     double a=Alt/Rad;
     double sinAlt=sin(a);
