@@ -12,6 +12,10 @@
 // SerialA is always enabled, SerialB and SerialC are optional
 #define SerialB Serial1
 #define HAL_SERIAL_B_ENABLED
+
+#define SerialC Serial2
+#define HAL_SERIAL_C_ENABLED
+
 #if defined(USB_DUAL_SERIAL) || defined(USB_TRIPLE_SERIAL)
   #define SerialD SerialUSB1
   #define SERIAL_D_BAUD_DEFAULT 9600
