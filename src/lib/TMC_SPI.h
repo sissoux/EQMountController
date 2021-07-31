@@ -19,6 +19,7 @@ class tmcSpiDriver {
     // microstepping mode:   micro_step_mode (0=256x, 1=128x, 2=64x, 3=32x, 4=16x, 5=8x, 6=4x, 7=2x, 8=1x)
     // irun, ihold, rsense:  current in mA and sense resistor value
     bool setup(bool intpol, int decay_mode, byte micro_step_mode, int irun, int ihold) {
+      
       if (!BBSpi.begin()) return false;
       uint32_t data_out=0;
 

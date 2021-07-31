@@ -333,27 +333,21 @@ void axis2DriverGotoMode() {
 void enableStepperDrivers() {
   // enable the stepper drivers
   if (axis1Enabled == false) {
-
-    bool Axis1InitStatus = false;
-    bool Axis2InitStatus = false;
-    
     #if AXIS1_DRIVER_MODEL == TMC_SPI && Axis1_EN == OFF
-      Axis1InitStatus= tmcAxis1.setup(AXIS1_DRIVER_INTPOL,AXIS1_DRIVER_DECAY_MODE,AXIS1_DRIVER_CODE,axis1Settings.IRUN,axis1SettingsEx.IHOLD);
+      tmcAxis1.setup(AXIS1_DRIVER_INTPOL,AXIS1_DRIVER_DECAY_MODE,AXIS1_DRIVER_CODE,axis1Settings.IRUN,axis1SettingsEx.IHOLD);
     #else
       digitalWrite(Axis1_EN,AXIS1_DRIVER_ENABLE);
     #endif
     axis1Enabled=true;
 
     #if AXIS2_DRIVER_MODEL == TMC_SPI && Axis2_EN == OFF
-      Axis2InitStatus = tmcAxis2.setup(AXIS2_DRIVER_INTPOL,AXIS2_DRIVER_DECAY_MODE,AXIS2_DRIVER_CODE,axis2Settings.IRUN,axis2SettingsEx.IHOLD);
+      tmcAxis2.setup(AXIS2_DRIVER_INTPOL,AXIS2_DRIVER_DECAY_MODE,AXIS2_DRIVER_CODE,axis2Settings.IRUN,axis2SettingsEx.IHOLD);
     #else
       if (Axis2_EN != OFF && Axis2_EN != SHARED) digitalWrite(Axis2_EN,AXIS2_DRIVER_ENABLE);
     #endif
     axis2Enabled=true;
 
     delay(WAIT_DRIVER_ENABLE);
-    if (!Axis1InitStatus) VLF("MSG: Axis1 Failed to initialize.");
-    if (!Axis2InitStatus) VLF("MSG: Axis2 Failed to initialize.");
     VLF("MSG: Axis1/2 stepper drivers enabled");
   }
 }

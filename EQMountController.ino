@@ -539,6 +539,7 @@ void loop2() {
     // 0.01S POLLING -------------------------------------------------------------------------------------
 #if TIME_LOCATION_SOURCE == GPS
     if ((PPS_SENSE == OFF || ppsSynced) && !tls.active && tls.poll()) {
+
       SerialGPS.end();
       currentSite=0; nv.update(EE_currentSite,currentSite);
 
@@ -558,6 +559,7 @@ void loop2() {
 
       dateWasSet=true;
       timeWasSet=true;
+      VLF("MSG: Successfully got GPS TLS");
     }
 #endif
 

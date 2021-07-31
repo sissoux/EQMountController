@@ -9,6 +9,7 @@
 // GPS TLS support
 // uses the specified serial port
 
+#include <TimeLib.h>            //https://github.com/PaulStoffregen/Time/archive/master.zip
 #include <TinyGPS++.h>          // http://arduiniana.org/libraries/tinygpsplus/
 TinyGPSPlus gps;
 
@@ -18,7 +19,7 @@ class timeLocationSource {
 
     // initialize
     bool init() {
-      active=false;
+      active=true;
       return active;
     }
 
@@ -42,9 +43,25 @@ class timeLocationSource {
     }
     
     // get the GPS's time (local standard time)
-    void get(double &JD, double &LMT) {
+    void get(double &JD, double &LMT) 
+    {
       if (!active) return;
-      if (!timeIsValid()) return;
+      if (!timeIsValid()) 
+      {
+          unsigned long TeensyTime;
+
+        TeensyTime = Teensy3Clock.get();            //get time from Teensy RTC
+        setTime(TeensyTime);                        //set system time
+
+        if ((year() >= 0) && (year() <= 3000) && (month() >= 1) && (month() <= 12) && (day() >= 1) && (day() <= 31) &&
+            (hour() >= 0) && (hour() <= 23) && (minute() >= 0) && (minute() <= 59) && (second() >= 0) && (second() <= 59)) 
+        {
+            int y1=year();
+            JD=julian(y1,month(),day());
+            LMT=(hour()+(minute()/60.0)+(second()/3600.0));
+        }
+        return;
+      }
 
       JD=julian(gps.date.year(),gps.date.month(),gps.date.day());
       LMT=(gps.time.hour()+(gps.time.minute()/60.0)+(gps.time.second()/3600.0))-timeZone;

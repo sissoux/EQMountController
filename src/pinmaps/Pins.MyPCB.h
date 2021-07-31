@@ -54,7 +54,7 @@
 #define Axis1_EN             5      // Enable
 #define Axis1_M0             11     // Microstep Mode 0 or SPI MOSI
 #define Axis1_M1             13     // Microstep Mode 1 or SPI SCK
-#define Axis1_M2             14     // Microstep Mode 2 or SPI CS or Decay Mode
+#define Axis1_M2             4     // Microstep Mode 2 or SPI CS or Decay Mode
 #define Axis1_M3             12     // ESP8266 GPIO0 (option on MiniPCB) or SPI MISO/Fault
 #define Axis1_STEP           3      // Step
 #define Axis1_DIR            2      // Dir
