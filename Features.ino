@@ -86,6 +86,7 @@ void featuresGetCommand(char *parameter, char *reply, bool &boolReply) {
 }
 
 // :GXYn#
+//  exemple :GXY1# gets Feature 1 info
 void featuresGetInfoCommand(char *parameter, char *reply, bool &boolReply) {
   int i=parameter[1]-'1';
   // return active features
