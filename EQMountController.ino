@@ -541,17 +541,20 @@ void loop2() {
     if ((PPS_SENSE == OFF || ppsSynced) && tls.poll()) {
 
       SerialGPS.end();
-      currentSite=0; nv.update(EE_currentSite,currentSite);
+      currentSite=0; 
+      nv.update(EE_currentSite,currentSite);
+      
 
       tls.getSite(latitude,longitude);
       tls.get(JD,LMT);
 
       timeZone=nv.read(EE_sites+currentSite*25+8)-128;
       timeZone=decodeTimeZone(timeZone);
+
       UT1=LMT+timeZone;
 
       nv.writeString(EE_sites+currentSite*25+9,(char*)"GPS");
-      setLatitude(latitude);
+      setLatitude(latitude);  //Set and STORE latitude
       nv.writeFloat(EE_sites+currentSite*25+4,longitude);
       updateLST(jd2last(JD,UT1,false));
 

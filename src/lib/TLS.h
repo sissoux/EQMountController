@@ -64,7 +64,6 @@ class timeLocationSource {
     // get the GPS's time (local standard time)
     void get(double &JD, double &LMT) 
     {
-      if (!active) return;
       if (!timeIsValid()) 
       {
           unsigned long TeensyTime;
@@ -90,7 +89,6 @@ class timeLocationSource {
 
     // get the GPS's location
     void getSite(double &LAT, double &LONG) {
-      if (!active) return;
       if (!siteIsValid()) return;
 
       LAT =gps.location.lat();
