@@ -17,6 +17,7 @@ class timeLocationSource {
   public:
     bool active=false;
 
+
     // initialize
     bool init() {
       active=true;
@@ -24,7 +25,8 @@ class timeLocationSource {
     }
 
     bool poll() {
-      if (gps.location.isValid() && siteIsValid() && gps.date.isValid() && gps.time.isValid() && timeIsValid()) { active=true; return true; }
+      if (active==false) return false;
+      if (gps.location.isValid() && gps.satellites.isValid() && gps.satellites.value()>5 && siteIsValid() && gps.date.isValid() && gps.time.isValid() && timeIsValid()) { active=false; return true; }
       while (SerialGPS.available() > 0) gps.encode(SerialGPS.read());
       return false;
     }
@@ -39,7 +41,24 @@ class timeLocationSource {
     }
 
     // set the GPS's time (does nothing)
-    void set(double JD, double LMT) {
+    void set(double JD, double LMT) 
+    {
+      int y,mo,d,h;
+      double m,s;
+      
+      greg(JD,&y,&mo,&d); y-=2000; if (y >= 100) y-=100;
+
+      double f1=fabs(LMT)+0.000139;
+      h=floor(f1);
+      m=(f1-h)*60.0;
+      s=(m-floor(m))*60.0;
+      //  dow=(round(J)%7)+1;
+
+      setTime(h, floor(m), floor(s), d, mo, y);   //set current system time
+
+      unsigned long TeensyTime;
+      TeensyTime = now();                         //get time in epoch
+      Teensy3Clock.set(TeensyTime);               //set Teensy time
     }
     
     // get the GPS's time (local standard time)
