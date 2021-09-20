@@ -176,11 +176,11 @@ void setup() {
 #endif
 
   // take a half-second to let any connected devices come up before we start setting up pins
-  delay(500);
+  //delay(500);
 
 #if DEBUG != OFF
   // initialize USB serial debugging early, so we can use DebugSer.print() for debugging, if needed
-  DebugSer.begin(9600); delay(5000); DebugSer.flush(); VLF(""); VLF("");
+  DebugSer.begin(115200); delay(5000); DebugSer.flush(); VLF(""); VLF("");
 #endif
 
   // say hello
@@ -194,7 +194,7 @@ void setup() {
   VLF("MSG: Init serial");
 
   // take a half-second to let the serial buffer empty before possibly restarting the debug port
-  delay(500);
+  //delay(500);
   SerialA.begin(SERIAL_A_BAUD_DEFAULT);
 #ifdef HAL_SERIAL_B_ENABLED
   #ifdef SERIAL_B_RX
@@ -228,7 +228,7 @@ void setup() {
 #endif
 
   // take another two seconds to be sure Serial ports are online
-  delay(2000);
+  //delay(2000);
 
   // set pins for input/output as specified in Config.h and PinMap.h
   VLF("MSG: Init pins");
