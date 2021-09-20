@@ -46,6 +46,7 @@ volatile unsigned long ppsAvgMicroS     = 1000000UL;
 volatile double ppsRateRatio            = 1.0;
 volatile double ppsLastRateRatio        = 1.0;
 volatile bool ppsSynced              = false;
+volatile bool gpsSynced              = false;
 
 // Tracking and rate control -------------------------------------------------------------------------------------------------------
 #if MOUNT_TYPE != ALTAZM
