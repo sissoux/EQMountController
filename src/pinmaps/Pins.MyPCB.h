@@ -30,7 +30,7 @@
 #define ReticlePin         Aux4   // Drain
 
 // For a piezo buzzer
-#define TonePin              29     // Tone
+#define TonePin              16     // Tone
 
 // The PPS pin is a 3.3V logic input, OnStep measures time between rising edges and adjusts the internal sidereal clock frequency
 #define PpsPin               28     // PPS time source, GPS for example

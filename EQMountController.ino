@@ -97,6 +97,7 @@
 #include "src/lib/FPoint.h"
 #include "src/lib/Heater.h"
 #include "src/lib/Intervalometer.h"
+#include "src/lib/TLS.h"
 #include "Globals.h"
 #include "src/lib/Julian.h"
 #include "src/lib/Misc.h"
@@ -105,7 +106,6 @@
 #include "Align.h"
 #include "src/lib/Library.h"
 #include "src/lib/Command.h"
-#include "src/lib/TLS.h"
 #include "src/lib/Weather.h"
 weather ambient;
 
@@ -176,11 +176,11 @@ void setup() {
 #endif
 
   // take a half-second to let any connected devices come up before we start setting up pins
-  delay(500);
+  //delay(500);
 
 #if DEBUG != OFF
   // initialize USB serial debugging early, so we can use DebugSer.print() for debugging, if needed
-  DebugSer.begin(9600); delay(5000); DebugSer.flush(); VLF(""); VLF("");
+  DebugSer.begin(115200); delay(5000); DebugSer.flush(); VLF(""); VLF("");
 #endif
 
   // say hello
@@ -194,7 +194,7 @@ void setup() {
   VLF("MSG: Init serial");
 
   // take a half-second to let the serial buffer empty before possibly restarting the debug port
-  delay(500);
+  //delay(500);
   SerialA.begin(SERIAL_A_BAUD_DEFAULT);
 #ifdef HAL_SERIAL_B_ENABLED
   #ifdef SERIAL_B_RX
@@ -228,7 +228,7 @@ void setup() {
 #endif
 
   // take another two seconds to be sure Serial ports are online
-  delay(2000);
+  //delay(2000);
 
   // set pins for input/output as specified in Config.h and PinMap.h
   VLF("MSG: Init pins");
@@ -540,18 +540,22 @@ void loop2() {
 #if TIME_LOCATION_SOURCE == GPS
     if ((PPS_SENSE == OFF || ppsSynced) && tls.poll()) {
 
+      
       SerialGPS.end();
-      currentSite=0; nv.update(EE_currentSite,currentSite);
+      currentSite=0; 
+      nv.update(EE_currentSite,currentSite);
+      
 
-      tls.getSite(latitude,longitude);
+      tls.getLocation(&latitude, &longitude);
       tls.get(JD,LMT);
 
       timeZone=nv.read(EE_sites+currentSite*25+8)-128;
       timeZone=decodeTimeZone(timeZone);
+
       UT1=LMT+timeZone;
 
       nv.writeString(EE_sites+currentSite*25+9,(char*)"GPS");
-      setLatitude(latitude);
+      setLatitude(latitude);  //Set and STORE latitude
       nv.writeFloat(EE_sites+currentSite*25+4,longitude);
       updateLST(jd2last(JD,UT1,false));
 
@@ -560,6 +564,7 @@ void loop2() {
       dateWasSet=true;
       timeWasSet=true;
       VLF("MSG: Successfully got GPS TLS");
+      soundBeep();
     }
 #endif
 

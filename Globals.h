@@ -2,8 +2,9 @@
 // Global variables 
 
 #pragma once
-
+#include "src/lib/TLS.h"
 // Time keeping --------------------------------------------------------------------------------------------------------------------
+timeLocationSource tls = timeLocationSource(&SerialGPS, 0);
 long siderealTimer                      = 0;                 // counter to issue steps during tracking
 long pecSiderealTimer                   = 0;                 // time since worm wheel zero index for PEC
 long guideSiderealTimer                 = 0;                 // counter to issue steps during guiding
