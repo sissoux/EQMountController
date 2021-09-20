@@ -78,7 +78,7 @@ class timeLocationSource
       s=(m-floor(m))*60.0;
 
       setTime(h, floor(m), floor(s), d, mo, y);   //set current system time
-      Teensy3Clock.set( now());               //set Teensy time
+      Teensy3Clock.set(now());               //set Teensy time
     }
 
     void setDateFromGPS()
