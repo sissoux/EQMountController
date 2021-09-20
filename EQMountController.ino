@@ -97,6 +97,7 @@
 #include "src/lib/FPoint.h"
 #include "src/lib/Heater.h"
 #include "src/lib/Intervalometer.h"
+#include "src/lib/TLS.h"
 #include "Globals.h"
 #include "src/lib/Julian.h"
 #include "src/lib/Misc.h"
@@ -105,7 +106,6 @@
 #include "Align.h"
 #include "src/lib/Library.h"
 #include "src/lib/Command.h"
-#include "src/lib/TLS.h"
 #include "src/lib/Weather.h"
 weather ambient;
 
@@ -540,12 +540,13 @@ void loop2() {
 #if TIME_LOCATION_SOURCE == GPS
     if ((PPS_SENSE == OFF || ppsSynced) && tls.poll()) {
 
+      
       SerialGPS.end();
       currentSite=0; 
       nv.update(EE_currentSite,currentSite);
       
 
-      tls.getSite(latitude,longitude);
+      tls.getLocation(&latitude, &longitude);
       tls.get(JD,LMT);
 
       timeZone=nv.read(EE_sites+currentSite*25+8)-128;
@@ -563,6 +564,7 @@ void loop2() {
       dateWasSet=true;
       timeWasSet=true;
       VLF("MSG: Successfully got GPS TLS");
+      soundBeep();
     }
 #endif
 
