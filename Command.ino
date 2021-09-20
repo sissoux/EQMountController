@@ -716,7 +716,7 @@ void processCommands() {
         if (pecRecorded)                         reply[i++]='R';                                             // PEC data has been [R]ecorded
         if (syncToEncodersOnly)                  reply[i++]='e';                                             // sync to [e]ncoders only
         if (atHome)                              reply[i++]='H';                                             // at [H]ome
-        if (ppsSynced)                           reply[i++]='S';                                             // PPS [S]ync
+        if (gpsSynced)                           reply[i++]='S';                                             // PPS [S]ync
         if (isPulseGuiding())                    reply[i++]='G';                                             // pulse [G]uide active
         if (guideDirAxis1 || guideDirAxis2)      reply[i++]='g';                                             // [g]uide active
 #if MOUNT_TYPE != ALTAZM
@@ -767,7 +767,7 @@ void processCommands() {
         if (trackingState != TrackingSidereal &&
           !(trackingState == TrackingMoveTo && lastTrackingState == TrackingSidereal)) reply[0]|=0b10000001; // Not tracking
         if (trackingState != TrackingMoveTo && !trackingSyncInProgress())  reply[0]|=0b10000010;             // No goto
-        if (ppsSynced)                               reply[0]|=0b10000100;                                   // PPS sync
+        if (gpsSynced)                               reply[0]|=0b10000100;                                   // PPS sync
         if (isPulseGuiding())                        reply[0]|=0b10001000;                                   // pulse guide active
 #if MOUNT_TYPE != ALTAZM
         if (rateCompensation == RC_REFR_RA)          reply[0]|=0b11010000;                                   // Refr enabled Single axis

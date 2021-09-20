@@ -539,7 +539,7 @@ void loop2() {
     // 0.01S POLLING -------------------------------------------------------------------------------------
 #if TIME_LOCATION_SOURCE == GPS
     if ((PPS_SENSE == OFF || ppsSynced) && tls.poll()) {
-
+      gpsSynced = true;
       
       SerialGPS.end();
       currentSite=0; 
